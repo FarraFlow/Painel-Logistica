@@ -47,6 +47,10 @@
     --op-entrega-bg:#FBEEDC; --op-entrega-fg:#9A5B0E;
     --op-recarregar-bg:#EFE7F4; --op-recarregar-fg:#6A3E8E;
     --op-outro-bg:#ECE7DE; --op-outro-fg:#5A5141;
+    /* Tons suaves para tingir a LINHA inteira no quadro Geral (mais claros que o badge,
+       para não competir com ele e manter a tabela legível). */
+    --row-montagem:#F1F8EE; --row-recolha:#EFF6FB; --row-entrega:#FDF6EC;
+    --row-recarregar:#F6F1FA; --row-outro:#F5F1E9;
     --wpp:#1FA855;
     font-family:'IBM Plex Sans',sans-serif;
   }
@@ -160,6 +164,23 @@
   .q-st-off{color:var(--line-strong);font-family:'IBM Plex Mono',monospace;}
   .st-btn{border:none;background:transparent;font-size:16px;line-height:1;cursor:pointer;padding:3px 5px;border-radius:6px;}
   .st-btn:active{background:var(--paper-2);}
+
+  /* ── Linha tingida pela operação (quadro Geral) ──────────────────────────
+     Toda a linha recebe o tom suave da operação. A célula de status (sticky,
+     sempre visível ao rolar para o lado) recebe a mesma cor + uma barra de
+     acento à esquerda na cor forte da operação — assim, mesmo com a coluna
+     "Operação" fora da tela, a faixa colorida indica qual é a operação. */
+  tr.op-row-MONTAGEM td{background:var(--row-montagem);}
+  tr.op-row-RECOLHA td{background:var(--row-recolha);}
+  tr.op-row-ENTREGA td{background:var(--row-entrega);}
+  tr.op-row-RECARREGAR td{background:var(--row-recarregar);}
+  tr.op-row-OUTRO td{background:var(--row-outro);}
+  tr[class*="op-row-"] .q-st{box-shadow:1px 0 0 var(--line);border-left:4px solid var(--line-strong);}
+  tr.op-row-MONTAGEM .q-st{background:var(--row-montagem);border-left-color:var(--op-montagem-fg);}
+  tr.op-row-RECOLHA .q-st{background:var(--row-recolha);border-left-color:var(--op-recolha-fg);}
+  tr.op-row-ENTREGA .q-st{background:var(--row-entrega);border-left-color:var(--op-entrega-fg);}
+  tr.op-row-RECARREGAR .q-st{background:var(--row-recarregar);border-left-color:var(--op-recarregar-fg);}
+  tr.op-row-OUTRO .q-st{background:var(--row-outro);border-left-color:var(--op-outro-fg);}
   .empty{text-align:center;padding:70px 20px;color:var(--ink-soft);}
   .empty .big{font-family:'Bricolage Grotesque',sans-serif;font-size:40px;color:var(--line-strong);margin-bottom:8px;}
 
@@ -389,26 +410,34 @@
       const resp=await fetch(APPS_URL).then(x=>x.json());
       STATUS_MAP={};
       (resp.status||[]).forEach(s=>{
-        if(s && s.pedido && s.status) STATUS_MAP[s.pedido+'|'+String(s.operacao||'').toUpperCase()]=s.status;
+        // Chave agora inclui o DIA: o status vale só para o dia em que foi marcado.
+        // Requer que o Apps Script devolva o campo "dia" em cada item de status.
+        if(s && s.pedido && s.status){
+          const dia=String(s.dia||'').toUpperCase().trim();
+          STATUS_MAP[dia+'|'+s.pedido+'|'+String(s.operacao||'').toUpperCase()]=s.status;
+        }
       });
     }catch(_){ /* mantém o que tiver */ }
   }
 
   // Só faz sentido marcar status quando há pedido real E operação.
   function statusAtivo(p){ return realPedido(p.pedido) && String(p.op||'').trim()!==''; }
-  function statusKey(p){ return p.pedido+'|'+String(p.op||'').toUpperCase().trim(); }
+  // A tabela exibida é sempre do dia selecionado (estado.dia), então a chave
+  // do status carrega esse dia. Marcar num dia não reflete em outro.
+  function statusKey(p){ return estado.dia+'|'+p.pedido+'|'+String(p.op||'').toUpperCase().trim(); }
 
   function iconStatus(st){ return st==='ok'?'✅':(st==='nao'?'❌':'⬜'); }
 
   // Alterna ⬜ -> ✅ -> ❌ -> ⬜. Atualiza só o botão (preserva a rolagem da tabela).
-  async function toggleStatus(el, pedido, operacao){
-    const key=pedido+'|'+operacao;
+  // O status é vinculado ao DIA: marcar num dia não afeta o mesmo pedido em outro dia.
+  async function toggleStatus(el, dia, pedido, operacao){
+    const key=dia+'|'+pedido+'|'+operacao;
     const atual=STATUS_MAP[key]||'';
     const prox = atual===''?'ok':(atual==='ok'?'nao':'');
     if(prox==='') delete STATUS_MAP[key]; else STATUS_MAP[key]=prox;
     el.textContent=iconStatus(prox);
     try{
-      const r=await fetch(APPS_URL,{method:'POST',body:JSON.stringify({acao:'salvar_status',pedido:pedido,operacao:operacao,status:prox})}).then(x=>x.json());
+      const r=await fetch(APPS_URL,{method:'POST',body:JSON.stringify({acao:'salvar_status',dia:dia,pedido:pedido,operacao:operacao,status:prox})}).then(x=>x.json());
       if(!r||!r.ok) throw new Error((r&&r.mensagem)||'falhou');
     }catch(e){
       if(atual==='') delete STATUS_MAP[key]; else STATUS_MAP[key]=atual;
@@ -420,7 +449,7 @@
   function statusCell(p){
     if(!statusAtivo(p)) return `<td class="q-st q-st-off">·</td>`;
     const st=STATUS_MAP[statusKey(p)]||'';
-    return `<td class="q-st"><button class="st-btn" onclick="toggleStatus(this,'${p.pedido}','${String(p.op||'').toUpperCase().trim()}')">${iconStatus(st)}</button></td>`;
+    return `<td class="q-st"><button class="st-btn" onclick="toggleStatus(this,'${estado.dia}','${p.pedido}','${String(p.op||'').toUpperCase().trim()}')">${iconStatus(st)}</button></td>`;
   }
   // Emblema só-leitura para a Detalhada (em branco quando não marcado).
   function statusBadge(p){
@@ -555,7 +584,7 @@
       rows+=`<tr class="q-rota"><td colspan="${cols.length}"><span class="q-rota-label">ROTA ${r.num} \u00b7 ${crew}</span></td></tr>`;
       rows+=`<tr class="q-head">${cols.map(c=>`<td>${c}</td>`).join('')}</tr>`;
       r.paradas.forEach(p=>{
-        rows+=`<tr>
+        rows+=`<tr class="op-row-${opClass(p.op)}">
           ${statusCell(p)}
           <td class="q-mono">${p.pedido&&p.pedido!=='\u2014'?p.pedido:'\u2014'}</td>
           <td>${p.vendedor||'\u2014'}</td>
