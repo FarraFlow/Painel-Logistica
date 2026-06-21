@@ -483,6 +483,9 @@
   let estado = carregarEstadoSalvo() || {dia:DOW[new Date().getDay()],view:"rotas",rotasView:"detalhada",vendedor:""};
 
   function opClass(op){return OP_COLOR_GROUP[String(op||'').toUpperCase().trim()]||"OUTRO";}
+  // Trata 0 e vazio como "sem valor". dash() devolve traço; zero() é o teste.
+  function zero(v){ const s=String(v==null?'':v).trim(); return s===''||s==='0'; }
+  function dash(v){ return zero(v)?'\u2014':String(v).trim(); }
   function mapsLink(end){return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(end);}
   const pinSvg='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>';
 
@@ -557,15 +560,15 @@
             <div class="stop-top">
               ${p.pedido&&p.pedido!=="—"?`<span class="pedido">#${p.pedido}</span>`:''}
               <span class="op ${opClass(p.op)}">${p.op}</span>
-              ${p.regiao?`<span class="regiao">${p.regiao}</span>`:''}
-              ${p.empresa?`<span class="empresa">${p.empresa}</span>`:''}
+              ${!zero(p.regiao)?`<span class="regiao">${dash(p.regiao)}</span>`:''}
+              ${!zero(p.empresa)?`<span class="empresa">${dash(p.empresa)}</span>`:''}
             </div>
-            <div class="cliente">${p.cliente}${statusBadge(p)}</div>
-            ${temVendedor(p.vendedor)?`<div class="stop-line"><span class="vend-lbl">Vendedor</span>${p.vendedor}</div>`:''}
+            <div class="cliente">${dash(p.cliente)}${statusBadge(p)}</div>
+            ${temVendedor(p.vendedor)?`<div class="stop-line"><span class="vend-lbl">Vendedor</span>${dash(p.vendedor)}</div>`:''}
             <div class="horarios">
-              <div class="h"><span class="lbl">Hr. Prévio</span><span class="val">${p.previo||'—'}</span></div>
-              <div class="h"><span class="lbl">A partir de</span><span class="val">${p.partir||'—'}</span></div>
-              <div class="h evento"><span class="lbl">Evento</span><span class="val">${p.evento||'—'}</span></div>
+              <div class="h"><span class="lbl">Hr. Prévio</span><span class="val">${dash(p.previo)}</span></div>
+              <div class="h"><span class="lbl">A partir de</span><span class="val">${dash(p.partir)}</span></div>
+              <div class="h evento"><span class="lbl">Evento</span><span class="val">${dash(p.evento)}</span></div>
             </div>
             ${p.endereco?`<div class="endereco">${pinSvg}<a href="${mapsLink(p.endereco)}" target="_blank" rel="noopener">${p.endereco}</a></div>`:''}
             ${temDet?`<button class="det-btn" onclick="toggleDet('${detId}')"><span class="cv">▾</span> Detalhe dos equipamentos</button>
@@ -600,15 +603,15 @@
           <td class="q-bar"></td>
           ${statusCell(p)}
           <td class="q-mono">${p.pedido&&p.pedido!=='\u2014'?p.pedido:'\u2014'}</td>
-          <td>${p.vendedor||'\u2014'}</td>
+          <td>${dash(p.vendedor)}</td>
           <td><span class="op ${opClass(p.op)}">${p.op}</span></td>
-          <td>${p.empresa||'\u2014'}</td>
-          <td>${p.local||'\u2014'}</td>
-          <td class="q-mono">${p.regiao||'\u2014'}</td>
-          <td class="q-cli">${p.cliente}</td>
-          <td class="q-mono">${p.previo||'\u2014'}</td>
-          <td class="q-mono">${p.partir||'\u2014'}</td>
-          <td class="q-mono q-ev">${p.evento||'\u2014'}</td>
+          <td>${dash(p.empresa)}</td>
+          <td>${dash(p.local)}</td>
+          <td class="q-mono">${dash(p.regiao)}</td>
+          <td class="q-cli">${dash(p.cliente)}</td>
+          <td class="q-mono">${dash(p.previo)}</td>
+          <td class="q-mono">${dash(p.partir)}</td>
+          <td class="q-mono q-ev">${dash(p.evento)}</td>
         </tr>`;
       });
       if(r.link_maps && /^https?:/.test(r.link_maps)){
@@ -675,10 +678,10 @@
         <div class="stop-top">
           ${p.pedido&&p.pedido!=='—'?`<span class="pedido">#${p.pedido}</span>`:''}
           <span class="op ${opClass(p.op)}">${p.op}</span>
-          ${p.regiao?`<span class="regiao">${p.regiao}</span>`:''}
-          ${p.empresa?`<span class="empresa">${p.empresa}</span>`:''}
+          ${!zero(p.regiao)?`<span class="regiao">${dash(p.regiao)}</span>`:''}
+          ${!zero(p.empresa)?`<span class="empresa">${dash(p.empresa)}</span>`:''}
         </div>
-        <div class="vc-cli">${p.cliente}</div>
+        <div class="vc-cli">${dash(p.cliente)}</div>
         ${equipe?`<div class="vc-crew">🚚 ${isRec?'Recolha':'Entrega'} por <b>${equipe}</b></div>`:''}
         ${j?`<div class="vc-janela ${isRec?'rec':''}"><span class="l">${labelJ}</span><br><span class="v">${j}</span></div>`:''}
         ${itens?`<div class="vc-itens"><span class="vc-itens-lbl">${isRec?'Equipamentos a recolher':'Itens do pedido'}</span>${itens}</div>`:''}
