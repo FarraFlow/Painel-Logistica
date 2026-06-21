@@ -159,27 +159,25 @@
   .q-maplink{position:sticky;left:0;display:inline-block;padding:7px 11px 9px;font-size:11px;color:var(--amber-deep);font-weight:600;text-decoration:none;font-family:'IBM Plex Mono',monospace;letter-spacing:0.2px;}
   .q-maplink:active{color:var(--amber);}
   .q-table .op{font-size:10px;padding:2px 7px;}
-  .q-st{position:sticky;left:0;z-index:2;background:var(--card);text-align:center;padding:4px 6px!important;box-shadow:1px 0 0 var(--line);}
-  .q-head td:first-child{position:sticky;left:0;z-index:3;background:var(--ink);box-shadow:1px 0 0 var(--ink);}
+  .q-st{position:sticky;left:10px;z-index:2;background:var(--card);text-align:center;padding:4px 6px!important;box-shadow:1px 0 0 var(--line);box-sizing:border-box;width:40px;min-width:40px;}
+  .q-st-head{position:sticky;left:10px;z-index:3;background:var(--ink);box-shadow:1px 0 0 var(--ink);box-sizing:border-box;width:40px;min-width:40px;}
+  .q-bar-head{position:sticky;left:0;z-index:3;background:var(--ink);box-sizing:border-box;width:10px;min-width:10px;padding:0!important;}
   .q-st-off{color:var(--line-strong);font-family:'IBM Plex Mono',monospace;}
   .st-btn{border:none;background:transparent;font-size:16px;line-height:1;cursor:pointer;padding:3px 5px;border-radius:6px;}
   .st-btn:active{background:var(--paper-2);}
 
-  /* ── Modelo A: linha tingida pela operação (quadro Geral) ────────────────
-     Toda a linha recebe o tom suave da operação. A célula de status (sticky)
-     recebe a mesma cor + uma faixa de acento à esquerda na cor cheia, que
-     continua visível ao rolar para o lado. */
-  tr.op-row-MONTAGEM td{background:var(--row-montagem);}
-  tr.op-row-RECOLHA td{background:var(--row-recolha);}
-  tr.op-row-ENTREGA td{background:var(--row-entrega);}
-  tr.op-row-RECARREGAR td{background:var(--row-recarregar);}
-  tr.op-row-OUTRO td{background:var(--row-outro);}
-  tr[class*="op-row-"] .q-st{box-shadow:1px 0 0 var(--line);border-left:4px solid var(--line-strong);}
-  tr.op-row-MONTAGEM .q-st{background:var(--row-montagem);border-left-color:var(--op-montagem-fg);}
-  tr.op-row-RECOLHA .q-st{background:var(--row-recolha);border-left-color:var(--op-recolha-fg);}
-  tr.op-row-ENTREGA .q-st{background:var(--row-entrega);border-left-color:var(--op-entrega-fg);}
-  tr.op-row-RECARREGAR .q-st{background:var(--row-recarregar);border-left-color:var(--op-recarregar-fg);}
-  tr.op-row-OUTRO .q-st{background:var(--row-outro);border-left-color:var(--op-outro-fg);}
+  /* ── Coluna de faixa de cor (fixa, antes do Status) ──────────────────────
+     Uma coluna estreita (10px) preenchida com a cor cheia da operação fica
+     fixa na borda esquerda, ANTES da coluna de status. Junto com o status
+     (também fixo), ela nunca sai da tela ao rolar para o lado — então a cor
+     da operação está sempre visível, mesmo quando a coluna "Operação" some.
+     As linhas ficam quase brancas; o sinal de cor vive só nessa faixa. */
+  .q-bar{position:sticky;left:0;z-index:2;width:10px;min-width:10px;max-width:10px;padding:0!important;box-sizing:border-box;border-bottom:none!important;background:var(--line-strong);}
+  tr.op-row-MONTAGEM   .q-bar{background:var(--op-montagem-fg);}
+  tr.op-row-RECOLHA    .q-bar{background:var(--op-recolha-fg);}
+  tr.op-row-ENTREGA    .q-bar{background:var(--op-entrega-fg);}
+  tr.op-row-RECARREGAR .q-bar{background:var(--op-recarregar-fg);}
+  tr.op-row-OUTRO      .q-bar{background:var(--op-outro-fg);}
   .empty{text-align:center;padding:70px 20px;color:var(--ink-soft);}
   .empty .big{font-family:'Bricolage Grotesque',sans-serif;font-size:40px;color:var(--line-strong);margin-bottom:8px;}
 
@@ -576,14 +574,15 @@
 
   function renderQuadro(rotas){
     if(rotas.length===0) return `<div class="empty"><div class="big">\u2205</div>Sem rotas para ${DIAS_LABEL[estado.dia]}.</div>`;
-    const cols=['\u2713','Pedido','Vendedor','Opera\u00e7\u00e3o','Empresa','Local','Regi\u00e3o','Cliente','Hr. Pr\u00e9vio','A partir','Evento'];
+    const cols=['','\u2713','Pedido','Vendedor','Opera\u00e7\u00e3o','Empresa','Local','Regi\u00e3o','Cliente','Hr. Pr\u00e9vio','A partir','Evento'];
     let rows='';
     rotas.forEach(r=>{
       const crew=r.ajudante?`${r.motorista} / ${r.ajudante}`:r.motorista;
       rows+=`<tr class="q-rota"><td colspan="${cols.length}"><span class="q-rota-label">ROTA ${r.num} \u00b7 ${crew}</span></td></tr>`;
-      rows+=`<tr class="q-head">${cols.map(c=>`<td>${c}</td>`).join('')}</tr>`;
+      rows+=`<tr class="q-head">${cols.map((c,i)=>`<td class="${i===0?'q-bar-head':(i===1?'q-st-head':'')}">${c}</td>`).join('')}</tr>`;
       r.paradas.forEach(p=>{
         rows+=`<tr class="op-row-${opClass(p.op)}">
+          <td class="q-bar"></td>
           ${statusCell(p)}
           <td class="q-mono">${p.pedido&&p.pedido!=='\u2014'?p.pedido:'\u2014'}</td>
           <td>${p.vendedor||'\u2014'}</td>
