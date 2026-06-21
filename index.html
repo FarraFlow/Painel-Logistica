@@ -51,6 +51,11 @@
        para não competir com ele e manter a tabela legível). */
     --row-montagem:#DDEEB2; --row-recolha:#BAD6EF; --row-entrega:#FAE6C6;
     --row-recarregar:#E0CFF1; --row-outro:#EAE3D5;
+    /* Paleta dedicada à FAIXA de cor (coluna fixa). Vívida e categórica —
+       matiz e luminosidade bem separados — porque a faixa não precisa ser
+       legível como texto. Independente das cores de badge (--op-*-fg). */
+    --bar-montagem:#1FA84A; --bar-recolha:#1565C0; --bar-entrega:#F07F09;
+    --bar-recarregar:#9C27B0; --bar-outro:#7A7167;
     --wpp:#1FA855;
     font-family:'IBM Plex Sans',sans-serif;
   }
@@ -173,11 +178,11 @@
      da operação está sempre visível, mesmo quando a coluna "Operação" some.
      As linhas ficam quase brancas; o sinal de cor vive só nessa faixa. */
   .q-bar{position:sticky;left:0;z-index:2;width:10px;min-width:10px;max-width:10px;padding:0!important;box-sizing:border-box;border-bottom:none!important;background:var(--line-strong);}
-  tr.op-row-MONTAGEM   .q-bar{background:var(--op-montagem-fg);}
-  tr.op-row-RECOLHA    .q-bar{background:var(--op-recolha-fg);}
-  tr.op-row-ENTREGA    .q-bar{background:var(--op-entrega-fg);}
-  tr.op-row-RECARREGAR .q-bar{background:var(--op-recarregar-fg);}
-  tr.op-row-OUTRO      .q-bar{background:var(--op-outro-fg);}
+  tr.op-row-MONTAGEM   .q-bar{background:var(--bar-montagem);}
+  tr.op-row-RECOLHA    .q-bar{background:var(--bar-recolha);}
+  tr.op-row-ENTREGA    .q-bar{background:var(--bar-entrega);}
+  tr.op-row-RECARREGAR .q-bar{background:var(--bar-recarregar);}
+  tr.op-row-OUTRO      .q-bar{background:var(--bar-outro);}
   .empty{text-align:center;padding:70px 20px;color:var(--ink-soft);}
   .empty .big{font-family:'Bricolage Grotesque',sans-serif;font-size:40px;color:var(--line-strong);margin-bottom:8px;}
 
