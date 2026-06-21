@@ -49,7 +49,7 @@
     --op-outro-bg:#ECE7DE; --op-outro-fg:#5A5141;
     /* Tons suaves para tingir a LINHA inteira no quadro Geral (mais claros que o badge,
        para não competir com ele e manter a tabela legível). */
-    --row-montagem:#DBEEC0; --row-recolha:#C4DDF2; --row-entrega:#FAE6C6;
+    --row-montagem:#DDEEB2; --row-recolha:#BAD6EF; --row-entrega:#FAE6C6;
     --row-recarregar:#E0CFF1; --row-outro:#EAE3D5;
     --wpp:#1FA855;
     font-family:'IBM Plex Sans',sans-serif;
@@ -165,19 +165,21 @@
   .st-btn{border:none;background:transparent;font-size:16px;line-height:1;cursor:pointer;padding:3px 5px;border-radius:6px;}
   .st-btn:active{background:var(--paper-2);}
 
-  /* ── Modelo B: faixa lateral forte (quadro Geral) ───────────────────────
-     A linha fica quase branca (var(--card), herdado). O sinal da operação é
-     uma faixa vertical grossa (7px) na cor cheia, aplicada na célula de status
-     — que é sticky e portanto fica SEMPRE visível ao rolar para o lado, mesmo
-     quando a coluna "Operação" sai da tela.
-     As variáveis --row-* (tom pastel) ficam sem uso aqui; mantidas caso queira
-     voltar ao modelo de linha colorida (A) ou ao híbrido (C). */
-  tr[class*="op-row-"] .q-st{box-shadow:1px 0 0 var(--line);border-left:7px solid var(--line-strong);}
-  tr.op-row-MONTAGEM .q-st{border-left-color:var(--op-montagem-fg);}
-  tr.op-row-RECOLHA .q-st{border-left-color:var(--op-recolha-fg);}
-  tr.op-row-ENTREGA .q-st{border-left-color:var(--op-entrega-fg);}
-  tr.op-row-RECARREGAR .q-st{border-left-color:var(--op-recarregar-fg);}
-  tr.op-row-OUTRO .q-st{border-left-color:var(--op-outro-fg);}
+  /* ── Modelo A: linha tingida pela operação (quadro Geral) ────────────────
+     Toda a linha recebe o tom suave da operação. A célula de status (sticky)
+     recebe a mesma cor + uma faixa de acento à esquerda na cor cheia, que
+     continua visível ao rolar para o lado. */
+  tr.op-row-MONTAGEM td{background:var(--row-montagem);}
+  tr.op-row-RECOLHA td{background:var(--row-recolha);}
+  tr.op-row-ENTREGA td{background:var(--row-entrega);}
+  tr.op-row-RECARREGAR td{background:var(--row-recarregar);}
+  tr.op-row-OUTRO td{background:var(--row-outro);}
+  tr[class*="op-row-"] .q-st{box-shadow:1px 0 0 var(--line);border-left:4px solid var(--line-strong);}
+  tr.op-row-MONTAGEM .q-st{background:var(--row-montagem);border-left-color:var(--op-montagem-fg);}
+  tr.op-row-RECOLHA .q-st{background:var(--row-recolha);border-left-color:var(--op-recolha-fg);}
+  tr.op-row-ENTREGA .q-st{background:var(--row-entrega);border-left-color:var(--op-entrega-fg);}
+  tr.op-row-RECARREGAR .q-st{background:var(--row-recarregar);border-left-color:var(--op-recarregar-fg);}
+  tr.op-row-OUTRO .q-st{background:var(--row-outro);border-left-color:var(--op-outro-fg);}
   .empty{text-align:center;padding:70px 20px;color:var(--ink-soft);}
   .empty .big{font-family:'Bricolage Grotesque',sans-serif;font-size:40px;color:var(--line-strong);margin-bottom:8px;}
 
