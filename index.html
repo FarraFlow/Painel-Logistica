@@ -462,7 +462,17 @@
   }
   const DIAS_LABEL={SEG:"Seg",TER:"Ter",QUA:"Qua",QUI:"Qui",SEX:"Sex",SAB:"Sáb",DOM:"Dom"};
   const SEDE="RUA MAXWELL, 418 - ANDARAÍ, RIO DE JANEIRO";  // origem das rotas
-  const OPS_VALIDAS=["MONTAGEM","RECOLHA","ENTREGA","RECARREGAR"];
+  // Grupo de COR de cada operação (define badge + faixa + linha no quadro).
+  // CARREGAR usa o mesmo roxo do RECARREGAR; DESCARREGAR usa o cinza (OUTRO).
+  // Operação desconhecida cai em OUTRO (cinza).
+  const OP_COLOR_GROUP={
+    MONTAGEM:"MONTAGEM",
+    RECOLHA:"RECOLHA",
+    ENTREGA:"ENTREGA",
+    RECARREGAR:"RECARREGAR",
+    CARREGAR:"RECARREGAR",
+    DESCARREGAR:"OUTRO",
+  };
   const DOW=["DOM","SEG","TER","QUA","QUI","SEX","SAB"];
   const ESTADO_KEY="farraflow_estado";
   function salvarEstado(){ try{ localStorage.setItem(ESTADO_KEY, JSON.stringify(estado)); }catch(_){} }
@@ -472,7 +482,7 @@
   }
   let estado = carregarEstadoSalvo() || {dia:DOW[new Date().getDay()],view:"rotas",rotasView:"detalhada",vendedor:""};
 
-  function opClass(op){return OPS_VALIDAS.includes(op)?op:"OUTRO";}
+  function opClass(op){return OP_COLOR_GROUP[String(op||'').toUpperCase().trim()]||"OUTRO";}
   function mapsLink(end){return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(end);}
   const pinSvg='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>';
 
