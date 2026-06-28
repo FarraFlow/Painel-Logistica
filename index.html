@@ -619,7 +619,7 @@
   function renderQuadro(rotas){
     EQ_REG={}; EQ_SEQ=0;
     if(rotas.length===0) return `<div class="empty"><div class="big">\u2205</div>Sem rotas para ${DIAS_LABEL[estado.dia]}.</div>`;
-    const cols=['','\u2713','Pedido','Opera\u00e7\u00e3o','Cliente','Hr. Pr\u00e9vio','A partir','Evento','Vendedor','Empresa','Local','Regi\u00e3o'];
+    const cols=['','\u2713','Pedido','Opera\u00e7\u00e3o','Vendedor','Cliente','Hr. Pr\u00e9vio','A partir','Evento','Empresa','Local','Regi\u00e3o'];
     let rows='';
     rotas.forEach(r=>{
       const crew=r.ajudante?`${r.motorista} / ${r.ajudante}`:r.motorista;
@@ -637,11 +637,11 @@
           ${statusCell(p)}
           <td class="q-mono">${pedCell}</td>
           <td><span class="op ${opClass(p.op)}">${p.op}</span></td>
+          <td>${dash(p.vendedor)}</td>
           <td class="q-cli">${dash(p.cliente)}</td>
           <td class="q-mono">${dash(p.previo)}</td>
           <td class="q-mono">${dash(p.partir)}</td>
           <td class="q-mono q-ev">${dash(p.evento)}</td>
-          <td>${dash(p.vendedor)}</td>
           <td>${dash(p.empresa)}</td>
           <td>${dash(p.local)}</td>
           <td class="q-mono">${dash(p.regiao)}</td>
