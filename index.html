@@ -488,7 +488,7 @@
   const DIAS_LABEL={SEG:"Seg",TER:"Ter",QUA:"Qua",QUI:"Qui",SEX:"Sex",SAB:"Sáb",DOM:"Dom"};
   const SEDE="RUA MAXWELL, 418 - ANDARAÍ, RIO DE JANEIRO";  // origem das rotas
   // Grupo de COR de cada operação (define badge + faixa + linha no quadro).
-  // CARREGAR usa o mesmo roxo do RECARREGAR; DESCARREGAR usa o cinza (OUTRO).
+  // CARREGAR e DESCARREGAR usam o mesmo roxo do RECARREGAR.
   // Operação desconhecida cai em OUTRO (cinza).
   const OP_COLOR_GROUP={
     MONTAGEM:"MONTAGEM",
@@ -496,7 +496,7 @@
     ENTREGA:"ENTREGA",
     RECARREGAR:"RECARREGAR",
     CARREGAR:"RECARREGAR",
-    DESCARREGAR:"OUTRO",
+    DESCARREGAR:"RECARREGAR",
   };
   const DOW=["DOM","SEG","TER","QUA","QUI","SEX","SAB"];
   const ESTADO_KEY="farraflow_estado";
@@ -619,7 +619,7 @@
   function renderQuadro(rotas){
     EQ_REG={}; EQ_SEQ=0;
     if(rotas.length===0) return `<div class="empty"><div class="big">\u2205</div>Sem rotas para ${DIAS_LABEL[estado.dia]}.</div>`;
-    const cols=['','\u2713','Pedido','Vendedor','Opera\u00e7\u00e3o','Empresa','Local','Regi\u00e3o','Cliente','Hr. Pr\u00e9vio','A partir','Evento'];
+    const cols=['','\u2713','Pedido','Opera\u00e7\u00e3o','Cliente','Hr. Pr\u00e9vio','A partir','Evento','Vendedor','Empresa','Local','Regi\u00e3o'];
     let rows='';
     rotas.forEach(r=>{
       const crew=r.ajudante?`${r.motorista} / ${r.ajudante}`:r.motorista;
@@ -636,15 +636,15 @@
           <td class="q-bar"></td>
           ${statusCell(p)}
           <td class="q-mono">${pedCell}</td>
-          <td>${dash(p.vendedor)}</td>
           <td><span class="op ${opClass(p.op)}">${p.op}</span></td>
-          <td>${dash(p.empresa)}</td>
-          <td>${dash(p.local)}</td>
-          <td class="q-mono">${dash(p.regiao)}</td>
           <td class="q-cli">${dash(p.cliente)}</td>
           <td class="q-mono">${dash(p.previo)}</td>
           <td class="q-mono">${dash(p.partir)}</td>
           <td class="q-mono q-ev">${dash(p.evento)}</td>
+          <td>${dash(p.vendedor)}</td>
+          <td>${dash(p.empresa)}</td>
+          <td>${dash(p.local)}</td>
+          <td class="q-mono">${dash(p.regiao)}</td>
         </tr>`;
       });
       if(r.link_maps && /^https?:/.test(r.link_maps)){
