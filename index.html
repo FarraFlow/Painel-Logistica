@@ -170,6 +170,18 @@
   .eqm-right{display:flex;align-items:center;gap:9px;flex-shrink:0;}
   .eqm-x{background:none;border:none;font-size:22px;line-height:1;color:var(--ink-soft);cursor:pointer;padding:0 2px;}
   .eqm-body{padding:14px 17px 18px;background:var(--paper-2);}
+  .eqm-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;}
+  .eqm-chip{font-size:11px;font-weight:600;padding:2px 9px;border-radius:6px;background:var(--card);color:var(--ink-soft);border:1px solid var(--line);}
+  .eqm-line{font-size:12.5px;color:var(--ink);margin-bottom:10px;}
+  .eqm-line .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-weight:700;margin-right:7px;}
+  .eqm-hor{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:2px 0 12px;}
+  .eqm-h{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:7px 10px;}
+  .eqm-h .l{display:block;font-size:8.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-weight:700;}
+  .eqm-h .v{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;color:var(--ink);}
+  .eqm-h.ev .v{color:var(--amber-deep);}
+  .eqm-end{display:flex;gap:7px;align-items:flex-start;font-size:12.5px;color:var(--amber-deep);margin-bottom:14px;}
+  .eqm-end a{color:inherit;text-decoration:none;font-weight:600;}
+  .eqm-eqt{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);font-weight:700;margin-bottom:9px;}
   .rota-foot a{flex:1;text-align:center;text-decoration:none;font-size:13px;font-weight:700;padding:9px;border-radius:9px;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;gap:7px;}
 
   .q-hint{font-size:11.5px;color:var(--ink-soft);margin:0 4px 12px;}
@@ -508,6 +520,9 @@
   let estado = carregarEstadoSalvo() || {dia:DOW[new Date().getDay()],view:"rotas",rotasView:"detalhada",vendedor:""};
 
   function opClass(op){return OP_COLOR_GROUP[String(op||'').toUpperCase().trim()]||"OUTRO";}
+  // Operações de recarga na base — não recebem atalho de detalhe na Geral (decisão 2).
+  const OPS_RECARGA=["CARREGAR","DESCARREGAR","RECARREGAR"];
+  function isRecarga(op){ return OPS_RECARGA.includes(String(op||'').toUpperCase().trim()); }
   // Trata 0 e vazio como "sem valor". dash() devolve traço; zero() é o teste.
   function zero(v){ const s=String(v==null?'':v).trim(); return s===''||s==='0'; }
   function dash(v){ return zero(v)?'\u2014':String(v).trim(); }
@@ -615,9 +630,9 @@
       }).join("");
   }
 
-  let EQ_REG={}, EQ_SEQ=0;
+  let PED_REG={}, PED_SEQ=0;
   function renderQuadro(rotas){
-    EQ_REG={}; EQ_SEQ=0;
+    PED_REG={}; PED_SEQ=0;
     if(rotas.length===0) return `<div class="empty"><div class="big">\u2205</div>Sem rotas para ${DIAS_LABEL[estado.dia]}.</div>`;
     const cols=['','\u2713','Pedido','Opera\u00e7\u00e3o','Vendedor','Cliente','Hr. Pr\u00e9vio','A partir','Evento','Empresa','Local','Regi\u00e3o'];
     let rows='';
@@ -626,11 +641,14 @@
       rows+=`<tr class="q-rota"><td colspan="${cols.length}"><span class="q-rota-label">ROTA ${r.num} \u00b7 ${crew}</span></td></tr>`;
       rows+=`<tr class="q-head">${cols.map((c,i)=>`<td class="${i===0?'q-bar-head':(i===1?'q-st-head':'')}">${c}</td>`).join('')}</tr>`;
       r.paradas.forEach(p=>{
-        const ped = (p.pedido && p.pedido!=='\u2014') ? p.pedido : '\u2014';
+        const ped = realPedido(p.pedido) ? p.pedido : '\u2014';
         let pedCell = ped;
-        if(ped!=='\u2014' && temEquip(p)){
-          const eqId='eq'+(EQ_SEQ++); EQ_REG[eqId]=p;
-          pedCell=`<button class="ped-eq" onclick="openEqModal('${eqId}')" title="Ver equipamentos">${ped}<span class="ped-eq-ic">\u25a4</span></button>`;
+        // Clicável para ver detalhe: pedido real e que NÃO seja recarga (decisão 2).
+        // Ícone ▤ só quando há equipamento dentro.
+        if(realPedido(p.pedido) && !isRecarga(p.op)){
+          const pid='pd'+(PED_SEQ++); PED_REG[pid]=p;
+          const ic = temEquip(p) ? '<span class="ped-eq-ic">\u25a4</span>' : '';
+          pedCell=`<button class="ped-eq" onclick="openPedidoModal('${pid}')" title="Ver detalhe do pedido">${ped}${ic}</button>`;
         }
         rows+=`<tr class="op-row-${opClass(p.op)}">
           <td class="q-bar"></td>
@@ -857,14 +875,30 @@
   function toggleDet(id){document.getElementById(id).classList.toggle("open");
     const b=document.querySelector(`[onclick="toggleDet('${id}')"]`); if(b)b.classList.toggle("open");}
 
-  // Modal de equipamentos (atalho da aba Geral). Reusa detPanelHtml -> mesmo
-  // layout em 2 colunas da Detalhada.
-  function openEqModal(id){
-    const p=EQ_REG[id]; if(!p) return;
+  // Conteúdo do modal: detalhe completo do pedido (mesmas infos da Detalhada).
+  // Equipamento aparece já aberto quando há; sem equipamento, só as infos.
+  function pedidoDetalheHtml(p){
+    let h='';
+    const chips=[];
+    if(!zero(p.regiao)) chips.push(`<span class="regiao">${dash(p.regiao)}</span>`);
+    if(!zero(p.empresa)) chips.push(`<span class="eqm-chip">${dash(p.empresa)}</span>`);
+    if(chips.length) h+=`<div class="eqm-chips">${chips.join('')}</div>`;
+    if(temVendedor(p.vendedor)) h+=`<div class="eqm-line"><span class="lbl">Vendedor</span>${dash(p.vendedor)}</div>`;
+    h+=`<div class="eqm-hor">
+          <div class="eqm-h"><span class="l">Hr. Pr\u00e9vio</span><span class="v">${dash(p.previo)}</span></div>
+          <div class="eqm-h"><span class="l">A partir</span><span class="v">${dash(p.partir)}</span></div>
+          <div class="eqm-h ev"><span class="l">Evento</span><span class="v">${dash(p.evento)}</span></div>
+        </div>`;
+    if(p.endereco) h+=`<div class="eqm-end">${pinSvg}<a href="${mapsLink(p.endereco)}" target="_blank" rel="noopener">${p.endereco}</a></div>`;
+    if(temEquip(p)) h+=`<div class="eqm-eqt">Equipamentos</div>${detPanelHtml(p)}`;
+    return h;
+  }
+  function openPedidoModal(id){
+    const p=PED_REG[id]; if(!p) return;
     document.getElementById('eqm-ped').textContent = p.pedido;
     document.getElementById('eqm-cli').textContent = dash(p.cliente);
     const b=document.getElementById('eqm-badge'); b.className='op '+opClass(p.op); b.textContent=p.op;
-    document.getElementById('eqm-body').innerHTML = detPanelHtml(p);
+    document.getElementById('eqm-body').innerHTML = pedidoDetalheHtml(p);
     const back=document.getElementById('eq-modal');
     back.classList.add('on'); back.setAttribute('aria-hidden','false');
     document.body.style.overflow='hidden';
